@@ -19,10 +19,6 @@ const LIMITER = rateLimit({
 const DEFAULT_ALLOWED_METHODS = 'GET,HEAD,PUT,PATCH,POST,DELETE';
 
 const ALLOWED_CORS = [
-  // 'https://savemovies.valerkamade.ru',
-  // 'http://savemovies.valerkamade.ru',
-  // 'https://localhost:3001',
-  // 'http://localhost:3001',
 ];
 
 const REGEX_MOVIE = /^(https?:\/\/)?(www\.)?(youtube\.com|youtu\.be|rutube\.ru)\/(.+)$/;
