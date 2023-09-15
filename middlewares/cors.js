@@ -1,20 +1,23 @@
-const { DEFAULT_ALLOWED_METHODS, ALLOWED_CORS } = require('../utils/config');
+const allowedCors = [
+  'https://nikita-movie.nomoredomainsicu.ru',
+  'http://localhost:3000',
+];
 
-module.exports = (req, res, next) => {
+const cors = (req, res, next) => {
   const { method } = req;
   const { origin } = req.headers;
-
-  if (ALLOWED_CORS.includes(origin)) {
+  const requestHeaders = req.headers['access-control-request-headers'];
+  const DEFAULT_ALLOWED_METHODS = 'GET,HEAD,PUT,PATCH,POST,DELETE';
+  if (allowedCors.includes(origin)) {
     res.header('Access-Control-Allow-Origin', origin);
   }
-
-  res.header('Access-Control-Allow-Credentials', true);
-
-  const requestHeaders = req.headers['access-control-request-headers'];
   if (method === 'OPTIONS') {
     res.header('Access-Control-Allow-Methods', DEFAULT_ALLOWED_METHODS);
     res.header('Access-Control-Allow-Headers', requestHeaders);
     return res.end();
   }
+
   return next();
 };
+
+module.exports = cors;

@@ -1,9 +1,7 @@
 const mongoose = require('mongoose');
-const validator = require('validator');
+const { URL_REGEX } = require('../utils/constants');
 
-const { VALIDATION_URL_MESSAGE } = require('../utils/constants');
-
-const cardSchema = new mongoose.Schema({
+const movieSchema = new mongoose.Schema({
   country: {
     type: String,
     required: true,
@@ -27,26 +25,17 @@ const cardSchema = new mongoose.Schema({
   image: {
     type: String,
     required: true,
-    validate: {
-      validator: (v) => validator.isURL(v),
-      message: VALIDATION_URL_MESSAGE,
-    },
+    validate: (url) => URL_REGEX.test(url),
   },
   trailerLink: {
     type: String,
     required: true,
-    validate: {
-      validator: (v) => validator.isURL(v),
-      message: VALIDATION_URL_MESSAGE,
-    },
+    validate: (url) => URL_REGEX.test(url),
   },
   thumbnail: {
     type: String,
     required: true,
-    validate: {
-      validator: (v) => validator.isURL(v),
-      message: VALIDATION_URL_MESSAGE,
-    },
+    validate: (url) => URL_REGEX.test(url),
   },
   owner: {
     type: mongoose.Schema.Types.ObjectId,
@@ -65,6 +54,8 @@ const cardSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-}, { versionKey: false });
+});
 
-module.exports = mongoose.model('movie', cardSchema);
+const Movie = mongoose.model('movie', movieSchema);
+
+module.exports = Movie;

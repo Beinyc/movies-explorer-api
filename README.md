@@ -1,5 +1,4 @@
 # movies-explorer-api
 
-api: 51.250.5.243
-
-домен: api.nikita-movie.nomoredomainsicu.ru
+## Описание:
+API для регистрации и авторизации пользователей, сохранения фильмов.

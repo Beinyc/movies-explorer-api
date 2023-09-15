@@ -1,109 +1,127 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
-
-const { ValidationError } = mongoose.Error;
-
-const { JWT_SECRET, NODE_ENV } = require('../utils/config');
-
-const {
-  STATUS_SUCCESSFULLY,
-  CODE_UNIQUE_ERROR,
-  MAX_AGE_COOKIE,
-  ROUNDS_HASH,
-  INCORRECT_DATA_MESSAGE,
-  UNIQUE_MESSAGE,
-  CONFIRMATION_MESSAGE,
-  NOT_FOUND_MESSAGE,
-  VALIDATION_MESSAGE,
-} = require('../utils/constants');
-
 const User = require('../models/user');
-
-const IncorrectData = require('../errors/incorrect-data-error');
-const NotUniqueData = require('../errors/error-not-unique');
+const ConflictError = require('../errors/conflict-err');
+const BadRequestError = require('../errors/bad-request-err');
 const NotFoundError = require('../errors/not-found-err');
+const { errorMessageConflict, errorMessageBadRequest, errorMessageNotFound } = require('../utils/constants');
+const { KEY_SECRET } = require('../utils/config');
 
-// регистрация пользователя
-module.exports.userCreate = (req, res, next) => {
-  const {
-    name, email, password,
-  } = req.body;
-  bcrypt.hash(password, ROUNDS_HASH)
-    .then((hash) => User.create({
-      name, email, password: hash,
+// РЕГИСТРАЦИЯ: создать пользователя
+
+const createUser = (req, res, next) => {
+  // получаем из тела запроса переданные пользователем данные (name, email, password)
+  const { name, email, password } = req.body;
+  // хешируем пароль пользователя
+  bcrypt.hash(password, 10)
+    // ОБРАЩЕНИЕ К БД: создать нового пользователя с переданными данными
+    // _id пользователя добавляется автоматически
+    // в поле password записывается хеш пароля
+    .then((hash) => User.create({ name, email, password: hash }))
+    // ОТВЕТ ОТ БД: JSON нового пользователя (вернуть name, email, _id)
+    // хешированный пароль не возвращаем!
+    // статус 201 - «создано»
+    .then((user) => res.status(201).send({
+      name: user.name,
+      email: user.email,
+      // _id автоматически присваивается новой записи в БД
+      _id: user._id,
     }))
-    .then((user) => res.status(STATUS_SUCCESSFULLY).send(user.toJSON()))
     .catch((err) => {
-      if (err.code === CODE_UNIQUE_ERROR) {
-        next(new NotUniqueData(UNIQUE_MESSAGE));
-      } else if (err instanceof ValidationError) {
-        next(new IncorrectData(INCORRECT_DATA_MESSAGE));
-      } else {
-        next(err);
+      if (err.code === 11000) {
+        return next(new ConflictError(errorMessageConflict.userEmail));
       }
+      if (err instanceof mongoose.Error.ValidationError) {
+        return next(new BadRequestError(errorMessageBadRequest.userData));
+      }
+      return next(err);
     });
 };
 
-// авторизация пользователя
-module.exports.loginUser = (req, res, next) => {
-  const { email, password } = req.body;
+// АВТОРИЗАЦИЯ: предоставить пользователю токен, позволяющий получить доступ к защищенным маршрутам
 
+const login = (req, res, next) => {
+  // получаем из тела запроса переданные пользователем данные (email, password)
+  const { email, password } = req.body;
+  // ОБРАЩЕНИЕ К БД: найти пользователя по учетным данным (email, password)
   User.findUserByCredentials(email, password)
+    // возвращается JSON пользователя из БД
     .then((user) => {
+      // генерируем токен для пользователя
       const token = jwt.sign(
+        // тот _id, который был присвоен при создании нового пользователя,
+        // записываем в свойство _id (токен получает уникальное значение)
+        // по _id пользователя будет осуществляться верификация токена (jwt.verify)
+        // на этапе предоставления доступа к защищенным маршрутам
         { _id: user._id },
-        JWT_SECRET,
+        // секретный ключ подписи
+        KEY_SECRET,
+        // период действия токена: 7 дней
+        // затем пользователю нужно будет вновь авторизоваться, т.е. получить новый токен
         { expiresIn: '7d' },
       );
-      res.cookie('token', token, {
-        maxAge: MAX_AGE_COOKIE,
-        httpOnly: true,
-        sameSite: 'none',
-        secure: NODE_ENV === 'production',
-      })
-        .send({ message: CONFIRMATION_MESSAGE });
+      // ОТВЕТ ОТ БД: JSON токена пользователя
+      res.send({ token });
     })
     .catch(next);
 };
 
-// поиск в базе данных по айди
-const findById = (req, res, next, id) => {
-  User.findById(id)
-    .orFail(new NotFoundError(NOT_FOUND_MESSAGE))
-    .then((user) => res.send(user))
-    .catch(next);
-};
+// ПОЛУЧИТЬ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ (name и email)
 
-// запрос на активного пользователя
-module.exports.getCurrentUser = (req, res, next) => {
-  const { _id } = req.user;
-  findById(req, res, next, _id);
-};
-
-// обновление данных пользователя
-const updateUserData = (req, res, next, param) => {
-  const { _id } = req.user;
-  User.findByIdAndUpdate(_id, param, { new: true, runValidators: true })
-    .then((user) => res.send(user))
+const getDataUser = (req, res, next) => {
+  // получаем id пользователя из пользовательского ключа
+  // --> из payload токена, присвоенного перед предоставлением доступа к защищенным маршрутам
+  const userId = req.user._id;
+  // ОБРАЩЕНИЕ К БД: найти пользователя по id
+  User.findById(userId)
+    // ОТВЕТ ОТ БД: JSON пользователя с данными (name и email)
+    .then((user) => res.send({
+      name: user.name,
+      email: user.email,
+    }))
     .catch((err) => {
-      if (err.code === CODE_UNIQUE_ERROR) {
-        next(new NotUniqueData(UNIQUE_MESSAGE));
-      } else if (err instanceof ValidationError) {
-        next(new ValidationError(VALIDATION_MESSAGE));
-      } else {
-        next(err);
+      if (err instanceof mongoose.Error.CastError) {
+        return next(new BadRequestError(errorMessageBadRequest.userId));
       }
+      return next(err);
     });
 };
 
-module.exports.updateUserProfile = (req, res, next) => {
+// ОБНОВИТЬ ДАННЫЕ ПОЛЬЗОВАТЕЛЯ (name и email)
+
+const updateUserData = (req, res, next) => {
+  // получаем из тела запроса name и email
   const { name, email } = req.body;
-  updateUserData(req, res, next, { name, email });
+  // получаем id пользователя из пользовательского ключа
+  // --> из payload токена, присвоенного перед предоставлением доступа к защищенным маршрутам
+  const userId = req.user._id;
+  // ОБРАЩЕНИЕ К БД: найти пользователя по id и обновить его данные (name и email)
+  User.findByIdAndUpdate(userId, { name, email }, { new: true, runValidators: true })
+    .then((user) => {
+      if (!user) {
+        throw new NotFoundError(errorMessageNotFound.userId);
+      }
+      // ОТВЕТ ОТ БД: JSON пользователя с обновленными данными (name и email)
+      return res.send({
+        name: user.name,
+        email: user.email,
+      });
+    })
+    .catch((err) => {
+      if (err.code === 11000) {
+        return next(new ConflictError(errorMessageConflict.userEmail));
+      }
+      if (err instanceof mongoose.Error.ValidationError) {
+        return next(new BadRequestError(errorMessageBadRequest.userUpdate));
+      }
+      return next(err);
+    });
 };
 
-// выход из системы
-module.exports.logoutUser = (req, res) => {
-  res.clearCookie('token')
-    .send({ message: CONFIRMATION_MESSAGE });
+module.exports = {
+  getDataUser,
+  updateUserData,
+  createUser,
+  login,
 };

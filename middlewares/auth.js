@@ -1,24 +1,24 @@
 const jwt = require('jsonwebtoken');
+const UnauthorizedError = require('../errors/unauthorized-err');
+const { errorMessageUnauthorized } = require('../utils/constants');
+const { KEY_SECRET } = require('../utils/config');
 
-const { JWT_SECRET } = require('../utils/config');
-const { AUTH_MESSAGE } = require('../utils/constants');
-const NotFoundAuth = require('../errors/auth-error');
+const auth = (req, res, next) => {
+  const { authorization } = req.headers;
 
-const handleAuthError = (req, res, next) => next(new NotFoundAuth(AUTH_MESSAGE));
-
-module.exports.auth = (req, res, next) => {
-  const { token } = req.cookies;
-  let payload;
-
-  try {
-    if (!token) {
-      return handleAuthError(req, res, next);
-    }
-    payload = jwt.verify(token, JWT_SECRET);
-  } catch (err) {
-    return handleAuthError(req, res, next);
+  if (!authorization || !authorization.startsWith('Bearer ')) {
+    return next(new UnauthorizedError(errorMessageUnauthorized.userLogin));
   }
 
+  const token = authorization.replace('Bearer ', '');
+  let payload;
+  try {
+    payload = jwt.verify(token, KEY_SECRET);
+  } catch (err) {
+    return next(new UnauthorizedError(errorMessageUnauthorized.userLogin));
+  }
   req.user = payload;
   return next();
 };
+
+module.exports = auth;
