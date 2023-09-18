@@ -1,6 +1,10 @@
 const allowedCors = [
   'https://nikita-movie.nomoredomainsicu.ru',
+  'http://nikita-movie.nomoredomainsicu.ru',
   'http://localhost:3000',
+  'https://localhost:3000',
+  'http://localhost:3001',
+  'https://localhost:3001',
 ];
 
 const cors = (req, res, next) => {
