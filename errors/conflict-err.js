@@ -1,10 +1,10 @@
 const { statusCodes } = require('../utils/constants');
 
-class ConflictError extends Error {
+class ErrorConflict extends Error {
   constructor(message) {
     super(message);
-    this.statusCode = statusCodes.conflictError;
+    this.statusCode = statusCodes.ErrorConflict;
   }
 }
 
-module.exports = ConflictError;
+module.exports = ErrorConflict;

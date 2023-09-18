@@ -1,14 +1,14 @@
-const { statusCodes, errorMessageServer } = require('../utils/constants');
+const { statusCodes, errorServerMessage } = require('../utils/constants');
 
 const errorHandler = (err, req, res, next) => {
-  const { statusCode = statusCodes.serverError, message } = err;
+  const { statusCode = statusCodes.errorServer, message } = err;
 
   res
     .status(statusCode)
     .send({
       message:
-        statusCode === statusCodes.serverError
-          ? errorMessageServer.server
+        statusCode === statusCodes.errorServer
+          ? errorServerMessage.server
           : message,
     });
   next();

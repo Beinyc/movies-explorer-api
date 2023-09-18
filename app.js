@@ -23,11 +23,9 @@ app.use(requestLogger);
 app.use(limiter);
 app.use(router);
 app.use(errorLogger);
-
 app.use(errors());
-
 app.use(errorHandler);
 
 app.listen(PORT, () => {
-  console.log(`Сервер запущен и работает на ${PORT} порту`);
+  console.log(`App listening on port ${PORT}`);
 });

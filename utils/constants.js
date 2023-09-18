@@ -1,52 +1,52 @@
 const URL_REGEX = /https?:\/\/(www\.)?[a-zA-Z0-9-]+\.[a-zA-Z0-9-._~:/?#[\]@!$&'()*+,;=]+#?/;
 
 const statusCodes = {
-  badRequestError: 400,
-  unauthorizedError: 401,
-  forbiddenError: 403,
-  notFoundError: 404,
-  conflictError: 409,
-  serverError: 500,
+  ErrorBadRequest: 400,
+  ErrorUnauthorized: 401,
+  ErrorForb: 403,
+  ErrorNotFound: 404,
+  ErrorConflict: 409,
+  errorServer: 500,
 };
 
-const errorMessageBadRequest = {
-  userData: 'не верные данные при создании пользователя',
-  userId: 'не верный _id пользователя',
-  userUpdate: 'не верные данные при обновлении профиля',
-  movieData: 'не верные данные при создании фильма',
-  movieId: 'не верные некорректный _id фильма',
+const ErrorRequestMessage = {
+  userData: 'Переданы непраивльные данные при создании пользователя',
+  userId: 'Передан непраивльный _id пользователя',
+  userUpdate: 'Переданы непраивльные данные при обновлении профиля',
+  movieData: 'Переданы непраивльные данные при создании фильма',
+  movieId: 'Передан непраивльный _id фильма',
 };
 
-const errorMessageUnauthorized = {
+const ErrorUnauthMessage = {
   userLogin: 'Необходима авторизация',
   userCredentials: 'Неправильные почта или пароль',
 };
 
-const errorMessageForbidden = {
+const ErrorForbMessage = {
   movieOwner: 'Не трогай фильм чужого пользователя',
 };
 
-const errorMessageNotFound = {
-  userId: 'Пользователь с указанным _id не найден',
-  movieId: 'Фильм с указанным _id не найден',
-  noRoute: 'Такого пути не существует',
+const ErrorNotFoundMessage = {
+  userId: 'Пользователь с таким _id не найден',
+  movieId: 'Фильм с таким _id не найден',
+  noRoute: 'Такого роут не найден',
 };
 
-const errorMessageConflict = {
+const ErrorConflictMessage = {
   userEmail: 'Пользователь с таким email уже зарегистрирован',
 };
 
-const errorMessageServer = {
-  server: 'ошибка на стороне сервера',
+const errorServerMessage = {
+  server: 'Ошибка на стороне сервера',
 };
 
 module.exports = {
   URL_REGEX,
   statusCodes,
-  errorMessageConflict,
-  errorMessageBadRequest,
-  errorMessageNotFound,
-  errorMessageForbidden,
-  errorMessageUnauthorized,
-  errorMessageServer,
+  ErrorConflictMessage,
+  ErrorRequestMessage,
+  ErrorNotFoundMessage,
+  ErrorForbMessage,
+  ErrorUnauthMessage,
+  errorServerMessage,
 };

@@ -1,10 +1,10 @@
 const { statusCodes } = require('../utils/constants');
 
-class ForbiddenError extends Error {
+class ErrorForb extends Error {
   constructor(message) {
     super(message);
-    this.statusCode = statusCodes.forbiddenError;
+    this.statusCode = statusCodes.ErrorForb;
   }
 }
 
-module.exports = ForbiddenError;
+module.exports = ErrorForb;

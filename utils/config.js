@@ -8,10 +8,11 @@ const {
 } = process.env;
 
 const DEV_SECRET = 'dev-secret';
-const KEY_SECRET = NODE_ENV === 'production' && JWT_SECRET ? JWT_SECRET : DEV_SECRET;
+
+const SECRET_KEY = NODE_ENV === 'production' && JWT_SECRET ? JWT_SECRET : DEV_SECRET;
 
 module.exports = {
   PORT,
   DB,
-  KEY_SECRET,
+  SECRET_KEY,
 };
